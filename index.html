@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+
+// Base de datos simulada de códigos
+const mockCodes: Record<string, string> = {
+  "E34099LA23457832": "Activo",
+  "A12345BB98765432": "Inactivo",
+  "PS99887766554433": "Activo",
+};
+
+// Función separada para poder probarla fácilmente
+export function lookupCode(code: string): string {
+  if (!code) return "Introduce un código.";
+
+  const normalized = code.toUpperCase();
+
+  if (mockCodes[normalized]) {
+    return `Estado del código: ${mockCodes[normalized]}`;
+  }
+
+  return "Código no encontrado.";
+}
+
+export default function WolfLookup() {
+  const [code, setCode] = useState("");
+  const [result, setResult] = useState("");
+
+  const handleSearch = () => {
+    setResult(lookupCode(code));
+  };
+
+  return (
+    <div
+      style={{
+        fontFamily: "Arial, Helvetica, sans-serif",
+        background: "#f4f6f8",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        margin: 0,
+      }}
+    >
+      <div
+        style={{
+          background: "white",
+          padding: 30,
+          borderRadius: 16,
+          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+          width: 360,
+          textAlign: "center",
+        }}
+      >
+        <h1>Wolf Lookup</h1>
+        <p style={{ color: "#666", fontSize: 14 }}>
+          Introduce el número de tu PlayStation para comprobar si está activo.
+        </p>
+
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Ejemplo: E34099LA23457832"
+          style={{
+            width: "100%",
+            padding: 10,
+            marginTop: 15,
+            borderRadius: 8,
+            border: "1px solid #ccc",
+            fontSize: 14,
+          }}
+        />
+
+        <button
+          onClick={handleSearch}
+          style={{
+            width: "100%",
+            padding: 10,
+            marginTop: 15,
+            borderRadius: 8,
+            border: "none",
+            background: "black",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
+          Comprobar código
+        </button>
+
+        {result && (
+          <div style={{ marginTop: 15, fontWeight: "bold" }}>{result}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// -------------------------
+// TESTS BÁSICOS
+// -------------------------
+
+function runTests() {
+  console.assert(
+    lookupCode("E34099LA23457832") === "Estado del código: Activo",
+    "Test 1 falló"
+  );
+
+  console.assert(
+    lookupCode("a12345bb98765432") === "Estado del código: Inactivo",
+    "Test 2 falló"
+  );
+
+  console.assert(
+    lookupCode("UNKNOWN") === "Código no encontrado.",
+    "Test 3 falló"
+  );
+
+  console.assert(
+    lookupCode("") === "Introduce un código.",
+    "Test 4 falló"
+  );
+}
+
+runTests();
