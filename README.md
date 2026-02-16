@@ -18,7 +18,7 @@ Esta herramienta obtiene información REAL desde los servidores de PlayStation N
 
 Clona el repositorio:
 
-git clone 
+git clone https://github.com/tiof835-ux/wolf-lookup
 
 Entra en la carpeta:
 
