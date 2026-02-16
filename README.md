@@ -46,11 +46,11 @@ npsso=eyJhbGciOi...
 
 4. Abre el archivo `lookup.js` y reemplaza:
 
-const NPSSO = "PON_AQUI_TU_NPSSO";
+const NPSSO = 
 
 por tu NPSSO real:
 
-const NPSSO = "TU_NPSSO_AQUI";
+const NPSSO = 
 
 ---
 
