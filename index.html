@@ -1,123 +1,273 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-// Base de datos simulada de códigos
-const mockCodes: Record<string, string> = {
-  "E34099LA23457832": "Activo",
-  "A12345BB98765432": "Inactivo",
-  "PS99887766554433": "Activo",
+// Base de datos simulada
+const mockCodes: Record<
+  string,
+  {
+    user: string;
+    status: "Activo" | "Inactivo";
+    region: string;
+    avatar: string;
+    recentGames: string[];
+    lastOnline: string;
+  }
+> = {
+  E34099LA23457832: {
+    user: "Carlos",
+    status: "Activo",
+    region: "Spain",
+    avatar: "https://i.pravatar.cc/150?img=12",
+    recentGames: ["FIFA 23", "God of War", "Horizon Forbidden West"],
+    lastOnline: "2026-02-15 22:45",
+  },
+  A12345BB98765432: {
+    user: "Lucia",
+    status: "Inactivo",
+    region: "Mexico",
+    avatar: "https://i.pravatar.cc/150?img=5",
+    recentGames: ["Spider-Man 2", "Gran Turismo 7"],
+    lastOnline: "2026-02-14 18:30",
+  },
+  PS99887766554433: {
+    user: "Miguel",
+    status: "Activo",
+    region: "Argentina",
+    avatar: "https://i.pravatar.cc/150?img=8",
+    recentGames: ["Elden Ring", "Resident Evil 4 Remake"],
+    lastOnline: "2026-02-15 20:10",
+  },
 };
 
-// Función separada para poder probarla fácilmente
-export function lookupCode(code: string): string {
-  if (!code) return "Introduce un código.";
+export function lookupCode(code: string) {
+  if (!code) return { message: "NO INPUT" };
 
   const normalized = code.toUpperCase();
+  const entry = mockCodes[normalized];
 
-  if (mockCodes[normalized]) {
-    return `Estado del código: ${mockCodes[normalized]}`;
-  }
+  if (!entry) return { message: "CODE NOT FOUND" };
 
-  return "Código no encontrado.";
+  return {
+    message: entry.status === "Activo" ? "ACCESS GRANTED" : "ACCESS DENIED",
+    user: entry.user,
+    status: entry.status,
+    region: entry.region,
+    avatar: entry.avatar,
+    recentGames: entry.recentGames,
+    lastOnline: entry.lastOnline,
+  };
 }
 
 export default function WolfLookup() {
   const [code, setCode] = useState("");
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [scanning, setScanning] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    const letters = "アァカサタナハマヤャラワ0123456789";
+    const fontSize = 16;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops: number[] = Array(columns).fill(1);
+
+    const draw = () => {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#00ff9c";
+      ctx.font = fontSize + "px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+
+        drops[i]++;
+      }
+    };
+
+    const interval = setInterval(draw, 33);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  const playBeep = () => {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const ctx = new AudioCtx();
+    const oscillator = ctx.createOscillator();
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+    oscillator.connect(ctx.destination);
+    oscillator.start();
+    setTimeout(() => {
+      oscillator.stop();
+      ctx.close();
+    }, 120);
+  };
 
   const handleSearch = () => {
-    setResult(lookupCode(code));
+    playBeep();
+    setScanning(true);
+    setResult(null);
+
+    setTimeout(() => {
+      const res = lookupCode(code);
+      setResult(res);
+      setScanning(false);
+    }, 1500);
   };
 
   return (
     <div
       style={{
-        fontFamily: "Arial, Helvetica, sans-serif",
-        background: "#f4f6f8",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        fontFamily: "Courier New, monospace",
+        background: "black",
+        color: "#00ff9c",
         height: "100vh",
-        margin: 0,
+        overflow: "hidden",
       }}
     >
+      <canvas
+        ref={canvasRef}
+        style={{ position: "absolute", top: 0, left: 0 }}
+      />
+
       <div
         style={{
-          background: "white",
-          padding: 30,
-          borderRadius: 16,
-          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-          width: 360,
-          textAlign: "center",
+          position: "relative",
+          zIndex: 2,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
         }}
       >
-        <h1>Wolf Lookup</h1>
-        <p style={{ color: "#666", fontSize: 14 }}>
-          Introduce el número de tu PlayStation para comprobar si está activo.
-        </p>
-
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Ejemplo: E34099LA23457832"
+        <div
           style={{
-            width: "100%",
-            padding: 10,
-            marginTop: 15,
+            border: "1px solid #00ff9c",
+            padding: 30,
             borderRadius: 8,
-            border: "1px solid #ccc",
-            fontSize: 14,
-          }}
-        />
-
-        <button
-          onClick={handleSearch}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginTop: 15,
-            borderRadius: 8,
-            border: "none",
-            background: "black",
-            color: "white",
-            fontWeight: "bold",
-            cursor: "pointer",
+            width: 480,
+            background: "rgba(0,0,0,0.85)",
+            boxShadow: "0 0 20px #00ff9c33",
           }}
         >
-          Comprobar código
-        </button>
+          <h1>WOLF LOOKUP TERMINAL</h1>
 
-        {result && (
-          <div style={{ marginTop: 15, fontWeight: "bold" }}>{result}</div>
-        )}
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="ENTER SYSTEM CODE"
+            style={{
+              width: "100%",
+              padding: 10,
+              marginTop: 10,
+              border: "1px solid #00ff9c",
+              background: "black",
+              color: "#00ff9c",
+            }}
+          />
+
+          <button
+            onClick={handleSearch}
+            style={{
+              width: "100%",
+              padding: 10,
+              marginTop: 10,
+              border: "1px solid #00ff9c",
+              background: "black",
+              color: "#00ff9c",
+              cursor: "pointer",
+            }}
+          >
+            RUN SCAN
+          </button>
+
+          {scanning && (
+            <div style={{ marginTop: 15 }}>SCANNING SYSTEM...</div>
+          )}
+
+          {result && !scanning && (
+            <div style={{ marginTop: 15 }}>
+              <div>&gt; {result.message}</div>
+
+              {result.user && (
+                <div style={{ marginTop: 10, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <img
+                    src={result.avatar}
+                    alt="avatar"
+                    style={{ width: 60, height: 60, borderRadius: "50%", border: "1px solid #00ff9c" }}
+                  />
+                  <div>
+                    <div>USER: {result.user}</div>
+                    <div>REGION: {result.region}</div>
+                    <div>STATUS: {result.status}</div>
+                    <div>LAST ONLINE: {result.lastOnline}</div>
+                    <div>RECENT GAMES:</div>
+                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                      {result.recentGames.map((game: string, idx: number) => (
+                        <li key={idx}>{game}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 // -------------------------
-// TESTS BÁSICOS
+// TESTS (only run in development)
 // -------------------------
 
-function runTests() {
-  console.assert(
-    lookupCode("E34099LA23457832") === "Estado del código: Activo",
-    "Test 1 falló"
-  );
+export function runTests() {
+  const ok = lookupCode("E34099LA23457832");
+  console.assert(ok.message === "ACCESS GRANTED", "Test access granted");
+  console.assert(ok.user === "Carlos", "Test user Carlos");
+  console.assert(ok.status === "Activo", "Test status Activo");
+  console.assert(ok.region === "Spain", "Test region Spain");
+  console.assert(Array.isArray(ok.recentGames) && ok.recentGames.length > 0, "Test recent games");
+  console.assert(typeof ok.avatar === "string", "Test avatar exists");
 
-  console.assert(
-    lookupCode("a12345bb98765432") === "Estado del código: Inactivo",
-    "Test 2 falló"
-  );
+  const denied = lookupCode("A12345BB98765432");
+  console.assert(denied.message === "ACCESS DENIED", "Test access denied");
+  console.assert(denied.user === "Lucia", "Test user Lucia");
+  console.assert(denied.status === "Inactivo", "Test status Inactivo");
+  console.assert(denied.region === "Mexico", "Test region Mexico");
+  console.assert(Array.isArray(denied.recentGames) && denied.recentGames.length > 0, "Test recent games");
 
-  console.assert(
-    lookupCode("UNKNOWN") === "Código no encontrado.",
-    "Test 3 falló"
-  );
+  const nf = lookupCode("XXX");
+  console.assert(nf.message === "CODE NOT FOUND", "Test not found");
 
-  console.assert(
-    lookupCode("") === "Introduce un código.",
-    "Test 4 falló"
-  );
+  const empty = lookupCode("");
+  console.assert(empty.message === "NO INPUT", "Test empty");
 }
 
-runTests();
+if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
+  runTests();
+}
