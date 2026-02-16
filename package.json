@@ -1,0 +1,12 @@
+{
+  "name": "wolf-psn-lookup",
+  "version": "1.0.0",
+  "description": "PSN terminal lookup tool",
+  "main": "lookup.js",
+  "scripts": {
+    "start": "node lookup.js"
+  },
+  "dependencies": {
+    "psn-api": "^2.0.0"
+  }
+}
