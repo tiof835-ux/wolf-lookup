@@ -18,7 +18,7 @@ Esta herramienta obtiene información REAL desde los servidores de PlayStation N
 
 Clona el repositorio:
 
-git clone https://github.com/TUUSUARIO/wolf-psn-lookup.git
+git clone 
 
 Entra en la carpeta:
 
